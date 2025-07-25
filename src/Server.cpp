@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <vector>
 
-int client_handler(int &client_fd) {
+int client_handler(int client_fd) {
   char buf[1024] = {};
 
   while (true) {
