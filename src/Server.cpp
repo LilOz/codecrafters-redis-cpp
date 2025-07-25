@@ -55,20 +55,20 @@ int main(int argc, char **argv) {
 
   // Uncomment this block to pass the first stage
 
-  accept(server_fd, (struct sockaddr *)&client_addr,
+  int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
          (socklen_t *)&client_addr_len);
   std::cout << "Client connected\n";
 
   char buf[1024] = {};
 
-  if (recv(server_fd, buf, sizeof(buf), 0) < 0) {
+  if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
     std::cerr << "recieve failed\n";
     return -1;
   }
 
   std::cout << "Message from client: " << buf << "\n";
 
-  if (send(server_fd, "+PONG\r\n", 7, 0) < 0) {
+  if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
     std::cerr << "send failed\n";
     return -1;
   }
