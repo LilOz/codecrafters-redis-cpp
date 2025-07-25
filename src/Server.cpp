@@ -61,14 +61,13 @@ int main(int argc, char **argv) {
 
   char buf[1024] = {};
 
-  if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
-    std::cerr << "recieve failed\n";
-    return -1;
-  }
-
-  std::cout << "Message from client: " << buf << "\n";
-
   while (true) {
+    if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
+      std::cerr << "recieve failed\n";
+      return -1;
+    }
+    std::cout << "Message from client: " << buf << "\n";
+
     if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
       std::cerr << "send failed\n";
       return -1;
