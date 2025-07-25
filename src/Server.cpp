@@ -73,7 +73,9 @@ int main(int argc, char **argv) {
 
     int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                            (socklen_t *)&client_addr_len);
-    clients.emplace_back(client_handler, client_fd);
+    std::thread t(client_handler, client_fd);
+    t.detach();
+    clients.push_back(std::move(t));
     std::cout << "Client connected\n";
   }
 
