@@ -6,7 +6,26 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <thread>
 #include <unistd.h>
+#include <vector>
+
+int client_handler(int &client_fd) {
+  char buf[1024] = {};
+
+  while (true) {
+    if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
+      std::cerr << "recieve failed\n";
+      return -1;
+    }
+    std::cout << "Message from client: " << buf << "\n";
+
+    if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
+      std::cerr << "send failed\n";
+      return -1;
+    }
+  }
+}
 
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
@@ -45,34 +64,19 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  struct sockaddr_in client_addr;
-  int client_addr_len = sizeof(client_addr);
-  std::cout << "Waiting for a client to connect...\n";
-
-  // You can use print statements as follows for debugging, they'll be visible
-  // when running tests.
-  std::cout << "Logs from your program will appear here!\n";
-
-  // Uncomment this block to pass the first stage
-
-  int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                         (socklen_t *)&client_addr_len);
-  std::cout << "Client connected\n";
-
-  char buf[1024] = {};
-
+  std::vector<std::thread> clients;
   while (true) {
-    if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
-      std::cerr << "recieve failed\n";
-      return -1;
-    }
-    std::cout << "Message from client: " << buf << "\n";
+    struct sockaddr_in client_addr;
+    int client_addr_len = sizeof(client_addr);
+    std::cout << "Waiting for a client to connect...\n";
+    std::cout << "Logs from your program will appear here!\n";
 
-    if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
-      std::cerr << "send failed\n";
-      return -1;
-    }
+    int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                           (socklen_t *)&client_addr_len);
+    clients.emplace_back(client_handler, client_fd);
+    std::cout << "Client connected\n";
   }
+
 
   close(server_fd);
 
