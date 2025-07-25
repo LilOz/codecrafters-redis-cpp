@@ -59,11 +59,20 @@ int main(int argc, char **argv) {
          (socklen_t *)&client_addr_len);
   std::cout << "Client connected\n";
 
-  const char buf[64] = "+PONG\r\n";
-  if (send(server_fd, buf, sizeof(buf), 0) < 0) {
+  char buf[1024] = {};
+
+  if (recv(server_fd, buf, sizeof(buf), 0) < 0) {
+    std::cerr << "recieve failed\n";
+    return -1;
+  }
+
+  std::cout << "Message from client: " << buf << "\n";
+
+  if (send(server_fd, "+PONG\r\n", 7, 0) < 0) {
     std::cerr << "send failed\n";
     return -1;
   }
+
   close(server_fd);
 
   return 0;
