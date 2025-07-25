@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
   // Uncomment this block to pass the first stage
 
   int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-         (socklen_t *)&client_addr_len);
+                         (socklen_t *)&client_addr_len);
   std::cout << "Client connected\n";
 
   char buf[1024] = {};
@@ -68,9 +68,11 @@ int main(int argc, char **argv) {
 
   std::cout << "Message from client: " << buf << "\n";
 
-  if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
-    std::cerr << "send failed\n";
-    return -1;
+  while (true) {
+    if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
+      std::cerr << "send failed\n";
+      return -1;
+    }
   }
 
   close(server_fd);
