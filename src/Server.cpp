@@ -3,29 +3,10 @@
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
-#include <vector>
-
-int client_handler(int client_fd) {
-  char buf[1024] = {};
-
-  while (true) {
-    if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
-      std::cerr << "recieve failed\n";
-      return -1;
-    }
-    std::cout << "Message from client: " << buf << "\n";
-
-    if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
-      std::cerr << "send failed\n";
-      return -1;
-    }
-  }
-}
 
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
@@ -64,7 +45,6 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::vector<std::thread> clients;
   while (true) {
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);
@@ -73,12 +53,29 @@ int main(int argc, char **argv) {
 
     int client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                            (socklen_t *)&client_addr_len);
-    std::thread t(client_handler, client_fd);
-    t.detach();
-    clients.push_back(std::move(t));
+    std::thread(
+        [](int client_fd) {
+          char buf[1024] = {};
+
+          while (true) {
+            if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
+              std::cerr << "recieve failed\n";
+              return -1;
+            }
+            std::cout << "Message from client: " << buf << "\n";
+
+            if (send(client_fd, "+PONG\r\n", 7, 0) < 0) {
+              std::cerr << "send failed\n";
+              return -1;
+            }
+          }
+          close(client_fd);
+          return 0;
+        },
+        client_fd)
+        .detach();
     std::cout << "Client connected\n";
   }
-
 
   close(server_fd);
 
