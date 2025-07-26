@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <cctype>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -58,8 +59,6 @@ public:
       if (!readBulkString(arg))
         return {};
 
-      for (auto& c : arg)
-        c = toupper(c);
       cmd.args.push_back(arg);
     }
 
@@ -165,7 +164,9 @@ int main(int argc, char** argv) {
             if (cmdOpt) {
               auto& cmd = cmdOpt.value();
 
-              const std::string& command = cmd.args[0];
+              std::string& command = cmd.args[0];
+              for (auto& c : command)
+                c = toupper(c);
 
               if (command == "PING") {
                 response = buildResponse("PONG");
