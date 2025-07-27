@@ -80,8 +80,6 @@ private:
   }
 
   bool readBulkString(std::string& out) {
-    // ECHO\r\n$3\r\nhey\r\n
-
     if (buffer.empty() || buffer[0] != '$')
       return false;
 
