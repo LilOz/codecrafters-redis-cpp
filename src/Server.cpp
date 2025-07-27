@@ -1,101 +1,15 @@
+#include "RESPUtils.hpp"
 #include <arpa/inet.h>
 #include <cctype>
-#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
-#include <optional>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
-#include <vector>
-
-//                                $3\r\nhey\r\n
-
-std::string buildResponse(const std::string& word) {
-  std::string res;
-  res += '$';
-  res += std::to_string(word.size());
-  res += "\r\n";
-  res += word;
-  res += "\r\n";
-
-  return res;
-}
-
-struct RESPCmd {
-  std::vector<std::string> args;
-
-  void print() {
-    for (auto& x : args) {
-      std::cout << x << "\n";
-    }
-  }
-};
-
-class RESPParser {
-public:
-  void append(const char* data, size_t len) { buffer.append(data, len); }
-
-  // parses a single RESP command from the data in buf
-  std::optional<RESPCmd> parseCommand() {
-    if (buffer.empty() || buffer[0] != '*')
-      return {};
-
-    buffer.erase(0, 1);
-
-    std::string line;
-    if (!readLine(line)) {
-      return {};
-    }
-    int cnt = std::stoi(line);
-
-    RESPCmd cmd;
-    for (int i = 0; i < cnt; i++) {
-      std::string arg;
-      if (!readBulkString(arg))
-        return {};
-
-      cmd.args.push_back(arg);
-    }
-
-    return cmd;
-  }
-
-private:
-  std::string buffer;
-
-  bool readLine(std::string& line) {
-    auto n = buffer.find("\r\n");
-    if (n == std::string::npos)
-      return false;
-
-    line = buffer.substr(0, n);
-    buffer.erase(0, n + 2);
-
-    return true;
-  }
-
-  bool readBulkString(std::string& out) {
-    if (buffer.empty() || buffer[0] != '$')
-      return false;
-
-    buffer.erase(0, 1); // remove $
-    std::string line;
-    if (!readLine(line))
-      return {};
-
-    int cnt = std::stoi(line);
-
-    out = buffer.substr(0, cnt);
-    buffer.erase(0, cnt + 2); // remove all plus the \r\n
-
-    return true;
-  }
-};
 
 int main(int argc, char** argv) {
   // Flush after every std::cout / std::cerr
@@ -149,17 +63,20 @@ int main(int argc, char** argv) {
           RESPParser parser;
           char buf[1024] = {};
           while (true) {
-            if (recv(client_fd, buf, sizeof(buf), 0) < 0) {
+            size_t bytes = recv(client_fd, buf, sizeof(buf), 0);
+            if (bytes < 0) {
               std::cerr << "recieve failed\n";
               return -1;
             }
             std::cout << "Message from client: " << buf << "\n";
 
-            parser.append(buf, strlen(buf));
-            auto cmdOpt = parser.parseCommand();
-            std::string response;
+            parser.append(buf, bytes);
 
-            if (cmdOpt) {
+            while (true) {
+              auto cmdOpt = parser.parseCommand();
+              if (!cmdOpt)
+                break;
+              std::string response;
               auto& cmd = cmdOpt.value();
 
               std::string& command = cmd.args[0];
@@ -173,10 +90,11 @@ int main(int argc, char** argv) {
               else if (command == "ECHO") {
                 response = buildResponse(cmd.args[1]);
               }
-            }
-            if (send(client_fd, response.c_str(), response.size(), 0) < 0) {
-              std::cerr << "send failed\n";
-              return -1;
+
+              if (send(client_fd, response.c_str(), response.size(), 0) < 0) {
+                std::cerr << "send failed\n";
+                return -1;
+              }
             }
           }
           close(client_fd);
