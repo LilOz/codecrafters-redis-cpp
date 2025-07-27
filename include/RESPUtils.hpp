@@ -6,7 +6,7 @@
 #include <vector>
 
 inline std::string buildResponse(const std::string& word) {
-  return "$" + std::to_string(word.size()) + "\r\n" + word + "\r\n";
+  return "+" + word + "\r\n";
 }
 
 struct RESPCmd {
