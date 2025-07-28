@@ -55,6 +55,8 @@ std::string CommandHandler::handleSet(const RESPCmd& command) {
     // of ms
     int delay_ms = std::stoi(command.args[4]);
     setTimeout([this, command]() { store.erase(command.args[1]); }, delay_ms);
+
+    return ResponseBuilder::buildSimpleString("OK");
   }
 
   return ResponseBuilder::buildError("Incorrect format for SET");
