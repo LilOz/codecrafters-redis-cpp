@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+
 class CommandHandler {
 public:
   CommandHandler();
@@ -19,3 +20,5 @@ private:
   std::string handleSet(const RESPCmd& command);
   std::string handleGet(const RESPCmd& command);
 };
+
+void setTimeout(std::function<void()> callback, int delay_ms);

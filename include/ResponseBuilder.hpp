@@ -10,9 +10,9 @@ public:
     return "+" + word + deliminator;
   }
   inline static std::string buildBulkString(const std::string& word) {
-    return "$" + std::to_string(word.size()) + "\r\n" + word + "\r\n";
+    return "$" + std::to_string(word.size()) + deliminator + word + deliminator;
   }
   inline static std::string buildError(const std::string& word) {
-    return "-ERR" + word + "\r\n";
+    return "-ERR" + word + deliminator;
   }
 };
