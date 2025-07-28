@@ -45,7 +45,7 @@ std::string CommandHandler::handleEcho(const RESPCmd& command) {
   return ResponseBuilder::buildSimpleString(command.args[1]);
 }
 std::string CommandHandler::handleSet(const RESPCmd& command) {
-  if (command.args.size() == 3) {
+  if (command.args.size() >= 3) {
     store.insert_or_assign(command.args[1], command.args[2]);
     return ResponseBuilder::buildSimpleString("OK");
   }
