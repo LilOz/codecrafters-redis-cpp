@@ -19,7 +19,6 @@ int handleClient(int client_fd, std::shared_ptr<CommandHandler> cmdHandler) {
       std::cout << "Client disconnected\n";
       break;
     }
-    std::cout << "Message from client: " << std::string(buf, bytes) << "\n";
 
     parser.append(buf, bytes);
 
