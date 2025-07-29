@@ -9,6 +9,9 @@ public:
   inline static std::string buildSimpleString(const std::string& word) {
     return "+" + word + deliminator;
   }
+  inline static std::string buildNullBulkString() {
+    return "$-1" + deliminator;
+  }
   inline static std::string buildBulkString(const std::string& word) {
     return "$" + std::to_string(word.size()) + deliminator + word + deliminator;
   }

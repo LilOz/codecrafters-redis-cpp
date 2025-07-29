@@ -7,8 +7,7 @@
 #include <thread>
 #include <unordered_map>
 
-void setTimeout(std::function<void()> callback, int delay_ms) {
-  std::thread([callback, delay_ms]() {
+void setTimeout(std::function<void()> callback, int delay_ms) { std::thread([callback, delay_ms]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
     callback();
   }).detach();
@@ -64,7 +63,9 @@ std::string CommandHandler::handleSet(const RESPCmd& command) {
 std::string CommandHandler::handleGet(const RESPCmd& command) {
   if (command.args.size() < 2)
     return ResponseBuilder::buildError("Not enough args for GET");
+
   if (auto it = store.find(command.args[1]); it != store.end())
     return ResponseBuilder::buildSimpleString(it->second);
-  return ResponseBuilder::buildBulkString("-1");
+
+  return ResponseBuilder::buildNullBulkString();
 }
