@@ -1,13 +1,13 @@
 #include "ClientHandle.hpp"
 #include "CommandHandler.hpp"
 #include "RESPUtils.hpp"
+#include <memory>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
 
-int handleClient(int client_fd) {
+int handleClient(int client_fd, std::shared_ptr<CommandHandler> cmdHandler) {
   RESPParser parser;
-  CommandHandler cmdHandler;
   char buf[1024] = {};
 
   while (true) {
@@ -15,8 +15,11 @@ int handleClient(int client_fd) {
     if (bytes < 0) {
       std::cerr << "recieve failed\n";
       return -1;
+    } else if (bytes == 0) {
+      std::cout << "Client disconnected\n";
+      break;
     }
-    std::cout << "Message from client: " << buf << "\n";
+    std::cout << "Message from client: " << std::string(buf, bytes) << "\n";
 
     parser.append(buf, bytes);
 
@@ -26,7 +29,7 @@ int handleClient(int client_fd) {
         break;
       auto& cmd = cmdOpt.value();
 
-      std::string response = cmdHandler.handleCommand(cmd);
+      std::string response = cmdHandler->handleCommand(cmd);
 
       if (send(client_fd, response.c_str(), response.size(), 0) < 0) {
         std::cerr << "send failed\n";

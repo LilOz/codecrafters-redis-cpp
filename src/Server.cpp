@@ -1,9 +1,11 @@
 #include "ClientHandle.hpp"
+#include "CommandHandler.hpp"
 #include <arpa/inet.h>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -49,15 +51,15 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  auto cmdHandler = std::make_shared<CommandHandler>();
   while (true) {
     struct sockaddr_in client_addr;
     int client_addr_len = sizeof(client_addr);
-    std::cout << "Waiting for a client to connect...\n";
-    std::cout << "Logs from your program will appear here!\n";
+    std::cout << "Waiting for a client to connect...\n\n";
 
     int client_fd = accept(server_fd, (struct sockaddr*)&client_addr,
                            (socklen_t*)&client_addr_len);
-    std::thread(handleClient, client_fd).detach();
+    std::thread(handleClient, client_fd, cmdHandler).detach();
     std::cout << "Client connected\n";
   }
 

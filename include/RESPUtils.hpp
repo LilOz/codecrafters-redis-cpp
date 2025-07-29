@@ -13,7 +13,7 @@ struct RESPCmd {
   std::vector<std::string> args;
 
   void print() {
-    for (auto& x : args) {
+    for (const auto& x : args) {
       std::cout << x << "\n";
     }
   }

@@ -2,6 +2,7 @@
 
 #include "RESPUtils.hpp"
 #include <functional>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -11,6 +12,7 @@ public:
   std::string handleCommand(const RESPCmd& command);
 
 private:
+  std::mutex mutex;
   std::unordered_map<std::string, std::function<std::string(const RESPCmd&)>>
       handlers;
   std::unordered_map<std::string, std::string> store;

@@ -15,8 +15,15 @@ std::optional<RESPCmd> RESPParser::parseCommand() {
   if (!readLine(line)) {
     return {};
   }
-  int cnt = std::stoi(line);
 
+  int cnt;
+  try {
+    cnt = std::stoi(line);
+  } catch (...) {
+    return {};
+  }
+
+  std::cout << "test\n";
   RESPCmd cmd;
   for (int i = 0; i < cnt; i++) {
     std::string arg;
@@ -26,6 +33,8 @@ std::optional<RESPCmd> RESPParser::parseCommand() {
     cmd.args.push_back(arg);
   }
 
+  std::cout<<"Command args: \n\n";
+  cmd.print();
   return cmd;
 }
 

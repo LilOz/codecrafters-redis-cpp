@@ -3,11 +3,13 @@
 #include "ResponseBuilder.hpp"
 #include <cctype>
 #include <chrono>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
 
-void setTimeout(std::function<void()> callback, int delay_ms) { std::thread([callback, delay_ms]() {
+void setTimeout(std::function<void()> callback, int delay_ms) {
+  std::thread([callback, delay_ms]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
     callback();
   }).detach();
@@ -38,28 +40,41 @@ std::string CommandHandler::handleCommand(const RESPCmd& command) {
 std::string CommandHandler::handlePing(const RESPCmd& command) {
   return ResponseBuilder::buildSimpleString("PONG");
 }
+
 std::string CommandHandler::handleEcho(const RESPCmd& command) {
   if (command.args.size() < 2)
     return ResponseBuilder::buildError("Not enough args for ECHO");
   return ResponseBuilder::buildSimpleString(command.args[1]);
 }
+
 std::string CommandHandler::handleSet(const RESPCmd& command) {
-  if (command.args.size() >= 3) {
-    store.insert_or_assign(command.args[1], command.args[2]);
-    return ResponseBuilder::buildSimpleString("OK");
-  }
+  std::lock_guard<std::mutex> lock(mutex);
+  if (command.args.size() < 3)
+    return ResponseBuilder::buildError("Not enough args for SET");
+  const std::string& key = command.args[1];
+  const std::string& val = command.args[2];
+  store.insert_or_assign(key, val);
 
   if (command.args.size() == 5) {
-    // assume is in correct format for now, arg[3] will be PX and arg[4] is num
-    // of ms
-    int delay_ms = std::stoi(command.args[4]);
-    setTimeout([this, command]() { store.erase(command.args[1]); }, delay_ms);
+    std::string opt = command.args[3];
+    for (auto& x : opt) {
+      x = toupper(static_cast<unsigned char>(x));
+    }
+    if (opt != "PX")
+      return ResponseBuilder::buildError("Invalid flag: " + opt);
 
-    return ResponseBuilder::buildSimpleString("OK");
+    const std::string& ttl = command.args[4];
+
+    try {
+      int delay_ms = std::stoi(ttl);
+      setTimeout([this, key]() { store.erase(key); }, delay_ms);
+    } catch (...) {
+      return ResponseBuilder::buildError("Incorrect ttl: " + ttl);
+    }
   }
-
-  return ResponseBuilder::buildError("Incorrect format for SET");
+  return ResponseBuilder::buildSimpleString("OK");
 }
+
 std::string CommandHandler::handleGet(const RESPCmd& command) {
   if (command.args.size() < 2)
     return ResponseBuilder::buildError("Not enough args for GET");
